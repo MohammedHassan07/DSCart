@@ -41,7 +41,7 @@ const getAllProducts = async (req, res) => {
 
     try {
 
-        const products = await productModel.find()
+        const products = await productModel.find().select(['-ingredients', '-description'])
 
         if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
 
@@ -58,7 +58,7 @@ const getProductByCategory = async (req, res) => {
 
         const category = req.params.category
 
-        const products = await productModel.find({ category: category })
+        const products = await productModel.find({ category: category }).select(['-ingredients', '-description'])
 
         if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
 
@@ -75,7 +75,7 @@ const getProductByName = async (req, res) => {
 
         const productName = req.params.name
 
-        const products = await productModel.find({ name: productName })
+        const products = await productModel.find({ name: productName }).select(['-ingredients', '-description'])
 
         if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
 

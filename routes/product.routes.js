@@ -11,6 +11,8 @@ route.get('/', getAllProducts)
 
 route.get('/category/:category', getProductByCategory)
 
+route.get('/name/:name', getProductByName)
+
 route.get('/id/:id', getProductById)
 
 export default route
