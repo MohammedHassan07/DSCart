@@ -1,5 +1,5 @@
 import express from 'express'
-import { addProduct, getAllProducts, getProductByCategory } from '../controller/product.controller.js'
+import { addProduct, getAllProducts, getProductByCategory, getProductById, getProductByName } from '../controller/product.controller.js'
 import uploadFoodImage from '../middleware/uploadImage.js'
 import verfiyToken from '../middleware/verifyToken.js'
 
@@ -9,6 +9,8 @@ route.post('/add', verfiyToken, uploadFoodImage.single('foodImage'), addProduct)
 
 route.get('/', getAllProducts)
 
-route.get('/:category', getProductByCategory)
+route.get('/category/:category', getProductByCategory)
+
+route.get('/id/:id', getProductById)
 
 export default route
