@@ -1,14 +1,13 @@
 import productModel from '../models/product.model.js'
 
+// Add Product --> Protected only for admin
 const addProduct = async (req, res) => {
 
     try {
 
         const fileName = req.file.filename
 
-        const { name, price, category } = req.body
-
-        console.log(req.file.path)
+        const { name, price, category, description, ingredients } = req.body
 
         // check if the file is sent from the user or not
         if (!req.file) return res.status(404).json({ flag: false, message: 'Image is required' })
@@ -20,7 +19,9 @@ const addProduct = async (req, res) => {
         const newProduct = new productModel({
 
             name, price, category,
-            imageURL: req.file.path
+            imageURL: req.file.path,
+            description,
+            ingredients
         })
 
         await newProduct.save()
@@ -34,6 +35,44 @@ const addProduct = async (req, res) => {
     }
 }
 
+
+// get all Product --> for every users
+const getAllProducts = async (req, res) => {
+
+    try {
+
+        const products = await productModel.find()
+
+        if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
+
+        res.status(200).json({ flag: true, products, message: 'Product found' })
+
+    } catch (error) {
+        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        console.log(error)
+    }
+}
+
+const getProductByCategory = async (req, res) => {
+    try {
+
+        const category = req.params.category
+
+        const products = await productModel.find({ category: category })
+
+        if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
+
+        res.status(200).json({ flag: true, products, message: 'Product found' })
+
+    } catch (error) {
+        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        console.log(error)
+    }
+}
+
+
 export {
-    addProduct
+    addProduct,
+    getAllProducts,
+    getProductByCategory
 }

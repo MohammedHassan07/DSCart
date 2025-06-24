@@ -16,11 +16,15 @@ const productSchema = new Schema({
 
         type: Number,
     },
-    
+
     imageURL: {
         type: String,
         unique: true
-    }
+    },
+
+    description: String,
+
+    ingredients: String
 })
 
 export default model('product', productSchema)

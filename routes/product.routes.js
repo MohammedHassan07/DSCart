@@ -1,9 +1,14 @@
 import express from 'express'
-import { addProduct } from '../controller/product.controller.js'
+import { addProduct, getAllProducts, getProductByCategory } from '../controller/product.controller.js'
 import uploadFoodImage from '../middleware/uploadImage.js'
+import verfiyToken from '../middleware/verifyToken.js'
 
 const route = express.Router()
 
-route.post('/add', uploadFoodImage.single('foodImage'), addProduct)
+route.post('/add', verfiyToken, uploadFoodImage.single('foodImage'), addProduct)
+
+route.get('/', getAllProducts)
+
+route.get('/:category', getProductByCategory)
 
 export default route

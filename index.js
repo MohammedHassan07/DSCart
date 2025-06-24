@@ -10,7 +10,7 @@ const PORT = process.env.PORT
 
 app.listen(PORT, () => {
     console.log(`Server is up at ${PORT}`)
-    // connectDataBase()
+    connectDataBase()
 })
 
 import userRoutes from './routes/user.routes.js'
