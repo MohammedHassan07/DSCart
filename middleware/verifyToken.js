@@ -1,6 +1,4 @@
 import jwt from "jsonwebtoken";
-import userModel from "../models/user.model.js";
-
 
 const verfiyToken = async (req, res, next) => {
 
@@ -18,10 +16,6 @@ const verfiyToken = async (req, res, next) => {
         const decoded = jwt.verify(token, SECRET_KEY)
 
         req.userId = decoded.userId
-
-        const user = await userModel.findOne({ _id: decoded.userId, isAdmin: true })
-
-        if (!user) return res.status(401).json({flag: false, message: 'Unauthorized'})
         next()
 
     } catch (error) {
