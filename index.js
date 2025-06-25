@@ -15,6 +15,8 @@ app.listen(PORT, () => {
 
 import userRoutes from './routes/user.routes.js'
 import productRoutes from './routes/product.routes.js'
+import adminRoutes from './routes/admin.routes.js'
 
 app.use('/api/user', userRoutes)
 app.use('/api/product', productRoutes)
+app.use('/api/admin', adminRoutes)
