@@ -2,22 +2,22 @@ import { Schema, model } from "mongoose";
 
 const orderSchema = new Schema({
 
-    user: {
+    userId: {
         type: Schema.Types.ObjectId,
-        require: true
+        require: true,
+        ref: 'user'
     },
 
     products: [{
 
         type: Schema.Types.ObjectId,
-        require: true
+        require: true,
+        ref: 'product'
     }],
 
-    quantity: Number,
+    rate: Number,
 
-    Rate: Number,
-
-    deliveryCharge: String,
+    deliveryCharge: Number,
 
     address: {
         type: String,
@@ -26,4 +26,4 @@ const orderSchema = new Schema({
 
 }, { timestamps: true })
 
-export default model('user', orderSchema)
+export default model('order', orderSchema)

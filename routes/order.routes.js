@@ -4,7 +4,9 @@ import { createOrder, getAllOrders, getOrdersByCategory, getOrdersByName } from 
 
 const route = express.Router()
 
-route.post('/create', verfiyToken, createOrder)
+route.use(verfiyToken)
+
+route.post('/create', createOrder)
 
 route.get('/', getAllOrders)
 
