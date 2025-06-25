@@ -137,4 +137,33 @@ const getOrdersByName = async (req, res) => {
     }
 }
 
-export { createOrder, getAllOrders, getOrdersByCategory, getOrdersByName }
+const getOrderByDate = async (req, res) => {
+    try {
+
+
+        const userId = new Types.ObjectId(req.userId)
+        const date = new Date(req.query.date)
+
+        // const orders = await orderModel.find({ userId })
+        //     .populate({ path: 'products', select: '-description -ingredients' })
+
+        // const filteredOrder = orders.filter(order =>
+        //     new Date(order.createdAt).getFullYear() == date.getFullYear())
+        // console.log(date, filteredOrder)
+        
+        res.send(date)
+
+    } catch (error) {
+
+        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        console.log(error)
+    }
+}
+
+export {
+    createOrder,
+    getAllOrders,
+    getOrdersByCategory,
+    getOrdersByName,
+    getOrderByDate
+}
