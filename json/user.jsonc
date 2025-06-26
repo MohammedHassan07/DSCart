@@ -1,0 +1,42 @@
+{
+    // 1: register user URL (http://localhost:3000/api/user/register)
+    // request body
+    "name": "temp",
+    "email": "temp@hogwardz.com",
+    "mobile": "09876",
+    "addess": "Hogwardz",
+
+    // response body --> status code 409, 400, 500, 201 (irrespective of the status code the json will contain two fields flag and message)
+    "flag": false,
+    "message": "User is already present with this email",
+
+    // 2: Login user URL (http://localhost:3000/api/user/login)
+    // request body
+    "email": "snape@hogwardz.com",
+    "mobile": "12345",
+
+    // response body --> status code 404, 400, 500, 200 (irrespective of the status code the json will contain three fields flag, token and message)
+    "flag": true,
+    "message": "User logged in",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODVhZjQyNGViNjdkN2VhNjdlNjFhNjAiLCJpYXQiOjE3NTA5NTkzMzB9.nr36KSId1FRviCXvfF7PVOfhf19JWM-YkGGH0_kdTzc",
+
+    // 3: Register Admin URL (http://localhost:3000/api/admin/register)
+    // request body
+    "name": "snape",
+    "email": "snape@hogwardz.com",
+    "password": "12345",
+
+    // response body --> status code 409, 400, 500, 201 (irrespective of the status code the json will contain two fields flag and message)
+    "flag": false,
+    "message": "User is already present with this email",
+
+     // 4: Admin user URL (http://localhost:3000/api/admin/login)
+    // request body
+     "email": "@hogwardz.com",
+    "mobile": "12345",
+
+    // response body --> status code 404, 400, 401, 500, 200 (irrespective of the status code the json will contain three fields flag, token and message)
+    "flag": true,
+    "message": "User logged in",
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODViOWY1ZmQ5MjBiZWEzODUwOGU4OWEiLCJpYXQiOjE3NTA5NTk3MjZ9.fKpVQBgq15ve2QhusG5QL1ppYKOlFDLeGkCNdLOTDWU"
+}

@@ -10,10 +10,10 @@ const addProduct = async (req, res) => {
         const { name, price, category, description, ingredients } = req.body
 
         // check if the file is sent from the user or not
-        if (!req.file) return res.status(404).json({ flag: false, message: 'Image is required' })
+        if (!req.file) return res.status(400).json({ flag: false, message: 'Image is required' })
 
         // check empty values
-        if (!name || !price || !category) return res.status(402).json({ flag: false, message: 'All fields are required' })
+        if (!name || !price || !category) return res.status(400).json({ flag: false, message: 'All fields are required' })
 
         // change the image URL with any CDN
         const newProduct = new productModel({
@@ -86,7 +86,6 @@ const getProductByName = async (req, res) => {
         console.log(error)
     }
 }
-
 
 const getProductById = async (req, res) => {
     try {

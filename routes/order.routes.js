@@ -4,6 +4,7 @@ import {
     createOrder,
     getAllOrders,
     getOrderByDate,
+    getOrderById,
     getOrdersByCategory,
     getOrdersByName
 } from '../controller/order.controller.js'
@@ -19,6 +20,8 @@ route.get('/', getAllOrders)
 route.get('/category/:category', getOrdersByCategory)
 
 route.get('/name/:name', getOrdersByName)
+
+route.get('/id/:id', getOrderById)
 
 route.get('/date', getOrderByDate)
 

@@ -11,14 +11,16 @@ const createOrder = async (req, res) => {
 
         const userId = req.userId
 
-        if (!products || !rate || !deliveryCharge || !address) return res.status(402).json({ flag: false, message: 'All fields are required' })
+        if (!products || !rate || !deliveryCharge || !address) return res.status(400).json({ flag: false, message: 'All fields are required' })
 
         // implement realtime communication to send the npotification to the shop owner
         const newOrder = new orderModel({ userId, products, rate, address, deliveryCharge })
 
         const ord = await newOrder.save()
 
-        res.status(200).json({ flag: true, message: 'Order created successfully' })
+        console.log(ord)
+
+        res.status(201).json({ flag: true, message: 'Order created successfully' })
 
         const io = socket.getIo()
 
@@ -45,7 +47,7 @@ const getAllOrders = async (req, res) => {
 
         if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No order found' })
 
-        res.status(200).json({ flag: true, orders })
+        res.status(200).json({ flag: true, orders, message: 'orders found' })
     } catch (error) {
 
         res.status(500).json({ flag: false, message: 'Internal Server Error' })
@@ -102,6 +104,33 @@ const getOrdersByCategory = async (req, res) => {
         console.log(error)
     }
 }
+
+const getOrderById = async (req, res) => {
+
+    try {
+
+        const id = req.params.id
+
+        const orders = await orderModel.find({_id: id}).populate({path: 'products', select: '-ingredients -description'})
+
+        // const orders = await orderModel.find({ userId })
+        //     .populate({ path: 'products', select: '-description -ingredients' })
+
+        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+
+        // const categoryOrders = orders.filter(order =>
+        //     order.products.some(p => p.category === category))
+
+        res.status(200).json({ flag: true, orders })
+
+    } catch (error) {
+
+        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        console.log(error)
+    }
+}
+
+
 
 const getOrdersByName = async (req, res) => {
 
@@ -187,6 +216,7 @@ export {
     createOrder,
     getAllOrders,
     getOrdersByCategory,
+    getOrderById,
     getOrdersByName,
     getOrderByDate
 }

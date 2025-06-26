@@ -10,13 +10,13 @@ const register = async (req, res) => {
         const { name, email, password } = req.body
 
         // check is Empty
-        if (!name || !email || !password) return res.status(402).json({ flag: false, message: 'All fields are required' })
+        if (!name || !email || !password) return res.status(400).json({ flag: false, message: 'All fields are required' })
 
         // check if user is already present
         const user = await adminModel.findOne({ email })
 
         // console.log(user)
-        if (user) return res.status(402).json({ flag: false, message: 'User is already present with this email' })
+        if (user) return res.status(409).json({ flag: false, message: 'User is already present with this email' })
 
         const newUser = new adminModel({ name, email, password })
         await newUser.save()
@@ -37,16 +37,16 @@ const login = async (req, res) => {
         const { email, password } = req.body
 
         // check is Empty
-        if (!email || !password) return res.status(402).json({ flag: false, message: 'All fields are required' })
+        if (!email || !password) return res.status(400).json({ flag: false, message: 'All fields are required' })
 
         // check if user is already present
         const user = await adminModel.findOne({ email })
 
-        if (!user) return res.status(402).json({ flag: false, message: 'User is not present, Please register yourself' })
+        if (!user) return res.status(404).json({ flag: false, message: 'User is not present, Please register yourself' })
 
         const flag = await bcrypt.compare(password, user.password)
 
-        if (!flag) return res.status(402).json({ flag: false, messae: 'Invalid Credentials' })
+        if (!flag) return res.status(401).json({ flag: false, messae: 'Invalid Credentials' })
 
         // generate token
         const SECRET_KEY = process.env.SECRET_KEY
