@@ -16,7 +16,7 @@ const createOrder = async (req, res) => {
         // implement realtime communication to send the npotification to the shop owner
         const newOrder = new orderModel({ userId, products, rate, address, deliveryCharge })
 
-        await newOrder.save()
+        const ord = await newOrder.save()
 
         res.status(200).json({ flag: true, message: 'Order created successfully' })
 
@@ -24,7 +24,7 @@ const createOrder = async (req, res) => {
 
         const user = await userModel.findOne({ _id: userId }).select(['-password', '-isAdmin'])
 
-        io.emit('order:creted', 'Order created successfully', user)
+        io.emit('order:creted', 'Order created successfully', { user, orderId: ord._id })
 
 
     } catch (error) {
