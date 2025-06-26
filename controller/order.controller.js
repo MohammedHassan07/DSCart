@@ -111,17 +111,17 @@ const getOrderById = async (req, res) => {
 
         const id = req.params.id
 
-        const orders = await orderModel.find({_id: id}).populate({path: 'products', select: '-ingredients -description'})
+        const order = await orderModel.findOne({_id: id}).populate({path: 'products', select: '-ingredients -description'})
 
         // const orders = await orderModel.find({ userId })
         //     .populate({ path: 'products', select: '-description -ingredients' })
 
-        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+        if (!order) return res.status(404).json({ flag: false, message: 'No orders found' })
 
         // const categoryOrders = orders.filter(order =>
         //     order.products.some(p => p.category === category))
 
-        res.status(200).json({ flag: true, orders })
+        res.status(200).json({ flag: true, order })
 
     } catch (error) {
 
@@ -129,8 +129,6 @@ const getOrderById = async (req, res) => {
         console.log(error)
     }
 }
-
-
 
 const getOrdersByName = async (req, res) => {
 
