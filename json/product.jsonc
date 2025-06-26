@@ -1,4 +1,6 @@
 {
+    // Every API requires header Authorization: '(Beare token)'
+ 
     // 1: Get all product, URL (http://localhost:3000/api/product/), METHOD: GET
 
     // response body --> status code 404, 500, 200 (irrespective of the status code the json will contain three fields flag and message, array of products)

@@ -1,4 +1,6 @@
 {
+    // Every API requires header Authorization: '(Beare token)'
+
     // 1: register user URL (http://localhost:3000/api/user/register)
     // request body
     "name": "temp",

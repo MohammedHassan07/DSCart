@@ -1,4 +1,6 @@
 {
+    // Every API requires header Authorization: '(Beare token)'
+    
     // 1: create order, URL (http://localhost:3000/api/order/create), METHOD: POST
     // request body 
     "products": [
