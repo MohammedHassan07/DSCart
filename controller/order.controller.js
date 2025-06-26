@@ -140,18 +140,32 @@ const getOrdersByName = async (req, res) => {
 const getOrderByDate = async (req, res) => {
     try {
 
-
         const userId = new Types.ObjectId(req.userId)
-        const date = new Date(req.query.date)
+        const userDate = new Date(req.query.date)
 
-        // const orders = await orderModel.find({ userId })
-        //     .populate({ path: 'products', select: '-description -ingredients' })
+        const month = userDate.getMonth() + 1
+        const date = userDate.getUTCDate() + '-' + month + '-' + userDate.getFullYear()
 
-        // const filteredOrder = orders.filter(order =>
-        //     new Date(order.createdAt).getFullYear() == date.getFullYear())
-        // console.log(date, filteredOrder)
-        
-        res.send(date)
+        const orders = await orderModel.find({ userId })
+            .populate({ path: 'products', select: '-description -ingredients' })
+
+        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+
+        const filteredOrder = orders.filter(order => {
+
+            let orderDate = new Date(order.createdAt)
+
+            let month = orderDate.getMonth() + 1
+            orderDate = orderDate.getUTCDate() + '-' + month + '-' + orderDate.getFullYear()
+
+            if (date === orderDate)
+                return order
+        })
+
+        if (filteredOrder.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+
+
+        res.json({ flag: true, message: 'Order found', order: filteredOrder })
 
     } catch (error) {
 
