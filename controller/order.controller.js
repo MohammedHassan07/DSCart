@@ -1,5 +1,7 @@
 import orderModel from "../models/order.model.js"
 import { Types } from "mongoose"
+import socket from "../config/socket.js"
+import userModel from "../models/user.model.js"
 
 const createOrder = async (req, res) => {
 
@@ -17,6 +19,13 @@ const createOrder = async (req, res) => {
         await newOrder.save()
 
         res.status(200).json({ flag: true, message: 'Order created successfully' })
+
+        const io = socket.getIo()
+
+        const user = await userModel.findOne({ _id: userId }).select(['-password', '-isAdmin'])
+
+        io.emit('order:creted', 'Order created successfully', user)
+
 
     } catch (error) {
 

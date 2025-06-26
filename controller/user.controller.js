@@ -6,7 +6,7 @@ const register = async (req, res) => {
 
     try {
 
-        const { name, email, mobile, isAdmin } = req.body
+        const { name, email, mobile, isAdmin, address } = req.body
 
         // check is Empty
         if (!name || !email || !mobile) return res.status(402).json({ flag: false, message: 'All fields are required' })
@@ -17,7 +17,7 @@ const register = async (req, res) => {
         // console.log(user)
         if (user) return res.status(402).json({ flag: false, message: 'User is already present with this email' })
 
-        const newUser = new userModel({ name, email, mobile, isAdmin })
+        const newUser = new userModel({ name, email, mobile, isAdmin, address })
         await newUser.save()
 
         res.status(201).json({ flag: true, message: 'User Registered successfully' })
