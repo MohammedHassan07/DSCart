@@ -1,34 +1,72 @@
 import orderModel from "../models/order.model.js"
 import { Types } from "mongoose"
 import socket from "../config/socket.js"
-import userModel from "../models/user.model.js"
+import orderService from '../services/order.service.js'
 
 const createOrder = async (req, res) => {
 
     try {
 
-        const { products, totalPrice, deliveryCharge, address, netTotal } = req.body
+        const { products, totalPrice, deliveryCharge, address, netTotal, userName, userEmail, totalQuantity } = req.body
 
         const userId = req.userId
 
-        if (!products || !totalPrice || !deliveryCharge || !address || !netTotal) return res.status(400).json({ flag: false, message: 'All fields are required' })
+        if (!products || products.length < 1 || !totalPrice || deliveryCharge == null || !address || !netTotal || !totalQuantity || !userName || !userEmail) {
+            return res.status(400).json({ flag: false, message: 'All fields are required' })
+        }
 
-        // implement realtime communication to send the npotification to the shop owner
-        const newOrder = new orderModel({ userId, products, totalPrice, address, deliveryCharge, netTotal, totalQunatity, category })
+        const lastOrder = await orderService.lastOrderService()
+        let nextNumber = 1
+        const codePrefix = 'OR'
+        if (lastOrder && lastOrder.orderNumber) {
 
-        const ord = await newOrder.save()
+            const lastNum = parseInt(lastOrder.orderNumber.replace(codePrefix, ''), 10);
+            nextNumber = lastNum + 1;
+        }
 
-        console.log(ord)
+        const newOrder = {
+            userId,
+            totalPrice,
+            address,
+            deliveryCharge,
+            netTotal,
+            totalQuantity,
+            orderNumber: codePrefix + String(nextNumber).padStart(6, '0')
+        }
+        const savedOrder = await orderService.createOrderService(newOrder)
 
-        res.status(201).json({ flag: true, message: 'Order created successfully' })
+        let newOrderHistory = []
+        for (const product of products) {
 
-        const io = socket.getIo()
+            const ord = {
 
-        const user = await userModel.findOne({ _id: userId }).select(['-password', '-isAdmin'])
+                userId: new Types.ObjectId(userId),
+                userName: userName,
+                userEmail: userEmail,
+                productName: product.productName,
+                productCategory: product.productCategory,
+                productPrice: product.productPrice,
+                totalPrice: product.totalPrice,
+                productQuantity: product.productQuantity,
+                orderNumber: codePrefix + String(nextNumber).padStart(6, '0'),
+                orderId: savedOrder._id,
+            }
 
-        io.emit('order:creted', 'Order created successfully', { user, orderId: ord._id })
+            newOrderHistory.push(ord)
+        }
 
+        const savedHistory = await orderService.insertManyOrderHistory(newOrderHistory);
+        savedOrder.products = savedHistory;
+        await savedOrder.save();
 
+        res.status(201).json({ flag: true, message: 'Order created successfully', order: savedOrder })
+
+        // TODO: implement realtime communication to send the npotification to the shop owner
+        // const io = socket.getIo()
+
+        // const user = await userModel.findOne({ _id: userId }).select(['-password', '-isAdmin'])
+
+        // io.emit('order:creted', 'Order created successfully', { user, orderId: ord._id })
     } catch (error) {
 
         res.status(500).json({ flag: false, message: 'Internal Server Error' })

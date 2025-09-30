@@ -1,4 +1,6 @@
 import { Schema, model } from "mongoose";
+import orderHistoryModel from "./orderHistory.model.js";
+
 
 const orderSchema = new Schema({
 
@@ -8,12 +10,7 @@ const orderSchema = new Schema({
         ref: 'user'
     },
 
-    products: [{
-
-        type: Schema.Types.ObjectId,
-        require: true,
-        ref: 'product'
-    }],
+    products: [orderHistoryModel.schema],
 
     totalPrice: Number,
 
@@ -21,13 +18,16 @@ const orderSchema = new Schema({
 
     netTotal: Number,
 
-    totalQunatity: Number,
-
-    category: [String],
+    totalQuantity: Number,
 
     address: {
         type: String,
         require: true
+    },
+
+    orderNumber: {
+        type: String,
+        default: 'OR1'
     }
 
 }, { timestamps: true })
