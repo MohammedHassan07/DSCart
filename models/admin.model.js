@@ -18,11 +18,15 @@ const adminSchema = new Schema({
         type: String,
         require: true,
         unique: true
+    },
+    isAdmin: {
+        type: Boolean,
+        default: false
     }
 })
 
 adminSchema.pre("save", async function (next) {
-    
+
     try {
 
         if (this.isModified("password")) {

@@ -15,9 +15,15 @@ const orderSchema = new Schema({
         ref: 'product'
     }],
 
-    rate: Number,
+    totalPrice: Number,
 
     deliveryCharge: Number,
+
+    netTotal: Number,
+
+    totalQunatity: Number,
+
+    category: [String],
 
     address: {
         type: String,

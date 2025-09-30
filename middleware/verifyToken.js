@@ -1,4 +1,4 @@
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
 
 const verfiyToken = async (req, res, next) => {
 
@@ -7,7 +7,7 @@ const verfiyToken = async (req, res, next) => {
         const authHeader = req.headers.authorization;
 
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({ message: "Unauthorized" });
+            return res.status(401).json({ status: 'failed', message: "Unauthorized" });
         }
 
         const token = authHeader.split(' ')[1]
@@ -16,6 +16,8 @@ const verfiyToken = async (req, res, next) => {
         const decoded = jwt.verify(token, SECRET_KEY)
 
         req.userId = decoded.userId
+        req.role = decoded.role
+
         next()
 
     } catch (error) {

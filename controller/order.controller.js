@@ -7,14 +7,14 @@ const createOrder = async (req, res) => {
 
     try {
 
-        const { products, rate, deliveryCharge, address } = req.body
+        const { products, totalPrice, deliveryCharge, address, netTotal } = req.body
 
         const userId = req.userId
 
-        if (!products || !rate || !deliveryCharge || !address) return res.status(400).json({ flag: false, message: 'All fields are required' })
+        if (!products || !totalPrice || !deliveryCharge || !address || !netTotal) return res.status(400).json({ flag: false, message: 'All fields are required' })
 
         // implement realtime communication to send the npotification to the shop owner
-        const newOrder = new orderModel({ userId, products, rate, address, deliveryCharge })
+        const newOrder = new orderModel({ userId, products, totalPrice, address, deliveryCharge, netTotal, totalQunatity, category })
 
         const ord = await newOrder.save()
 
@@ -111,7 +111,7 @@ const getOrderById = async (req, res) => {
 
         const id = req.params.id
 
-        const order = await orderModel.findOne({_id: id}).populate({path: 'products', select: '-ingredients -description'})
+        const order = await orderModel.findOne({ _id: id }).populate({ path: 'products', select: '-ingredients -description' })
 
         // const orders = await orderModel.find({ userId })
         //     .populate({ path: 'products', select: '-description -ingredients' })

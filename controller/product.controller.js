@@ -1,4 +1,7 @@
+import constants from '../config/constants.js'
 import productModel from '../models/product.model.js'
+import productsService from '../services/products.service.js'
+import { Types } from 'mongoose';
 
 // Add Product --> Protected only for admin
 const addProduct = async (req, res) => {
@@ -10,10 +13,10 @@ const addProduct = async (req, res) => {
         const { name, price, category, description, ingredients } = req.body
 
         // check if the file is sent from the user or not
-        if (!req.file) return res.status(400).json({ flag: false, message: 'Image is required' })
+        if (!req.file) return res.status(constants.BAD_REQUEST).json({ status: 'failed', message: 'Image is required' })
 
         // check empty values
-        if (!name || !price || !category) return res.status(400).json({ flag: false, message: 'All fields are required' })
+        if (!name || !price || !category) return res.status(constants.BAD_REQUEST).json({ status: 'failed', message: 'All fields are required' })
 
         // change the image URL with any CDN
         const newProduct = new productModel({
@@ -25,12 +28,12 @@ const addProduct = async (req, res) => {
         })
 
         await newProduct.save()
-        res.status(200).json({ flag: true, message: 'Product Added Successfully' })
+        res.status(constants.CREATED).json({ status: 'failed', message: 'Product Added Successfully' })
 
 
     } catch (error) {
 
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        res.status(constants.SERVER_ERROR).json({ status: 'failed', message: 'Internal Server Error', })
         console.log(error)
     }
 }
@@ -38,68 +41,93 @@ const addProduct = async (req, res) => {
 
 // get all Product --> for every users
 const getAllProducts = async (req, res) => {
-
     try {
 
-        const products = await productModel.find().select(['-ingredients', '-description'])
+        let { page = 1, limit = 10, search } = req.body;
 
-        if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
+        let filter = {}
+        if (search) {
+            filter.$or = [
+                { name: { $regex: search, $options: "i" } },
+                { category: { $regex: search, $options: "i" } },
+                { price: { $regex: search, $options: "i" } },
+            ];
+        }
 
-        res.status(200).json({ flag: true, products, message: 'Product found' })
+        page = parseInt(page);
+        limit = parseInt(limit);
 
-    } catch (error) {
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
-    }
-}
+        const { products, total } = await productsService.getAllProductsService(filter, page, limit)
 
-const getProductByCategory = async (req, res) => {
-    try {
+        if (products.length < 1) {
+            return res.status(constants.BAD_REQUEST).json({ status: 'failed', message: 'No products found' });
+        }
 
-        const category = req.params.category
-
-        const products = await productModel.find({ category: category }).select(['-ingredients', '-description'])
-
-        if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
-
-        res.status(200).json({ flag: true, products, message: 'Product found' })
-
-    } catch (error) {
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
-    }
-}
-
-const getProductByName = async (req, res) => {
-    try {
-
-        const productName = req.params.name
-
-        const products = await productModel.find({ name: productName }).select(['-ingredients', '-description'])
-
-        if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
-
-        res.status(200).json({ flag: true, products, message: 'Product found' })
+        res.status(constants.OK).json({
+            status: 'success',
+            total,
+            products,
+            message: 'Products found'
+        });
 
     } catch (error) {
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
+        res.status(constants.SERVER_ERROR).json({ status: 'failed', message: 'Internal Server Error', message: error.message });
+        console.log(error);
     }
-}
+};
+
+
+// const getProductByCategory = async (req, res) => {
+//     try {
+
+//         const category = req.params.category
+
+//         const products = await productModel.find({ category: category }).select(['-ingredients', '-description'])
+
+//         if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
+
+//         res.status(200).json({ flag: true, products, message: 'Product found' })
+
+//     } catch (error) {
+//         res.status(500).json({ flag: false, message: 'Internal Server Error' })
+//         console.log(error)
+//     }
+// }
+
+// const getProductByName = async (req, res) => {
+//     try {
+
+//         const productName = req.params.name
+
+//         const products = await productModel.find({ name: productName }).select(['-ingredients', '-description'])
+
+//         if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
+
+//         res.status(200).json({ flag: true, products, message: 'Product found' })
+
+//     } catch (error) {
+//         res.status(500).json({ flag: false, message: 'Internal Server Error' })
+//         console.log(error)
+//     }
+// }
 
 const getProductById = async (req, res) => {
     try {
 
         const productId = req.params.id
 
-        const products = await productModel.find({ _id: productId })
+        if (!Types.ObjectId.isValid(productId)) {
+            return res.status(constants.BAD_REQUEST).json({ status: 'failed', message: "Invalid Product ID" });
+        }
 
-        if (products.length < 1) return res.status(404).json({ flag: false, message: 'No products found' })
+        const product = await productsService.getProductByIdService(productId)
 
-        res.status(200).json({ flag: true, products, message: 'Product found' })
+        if (!product) return res.status(404).json({ status: 'failed', message: 'No products found' })
+            
+        res.status(200).json({ status: 'success', product, message: 'Product found' })
 
     } catch (error) {
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
         console.log(error)
     }
 }
@@ -108,7 +136,7 @@ const getProductById = async (req, res) => {
 export {
     addProduct,
     getAllProducts,
-    getProductByCategory,
-    getProductByName,
+    // getProductByCategory,
+    // getProductByName,
     getProductById
 }
