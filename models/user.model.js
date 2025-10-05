@@ -20,14 +20,15 @@ const userSchema = new Schema({
     email: {
 
         type: String,
-        require: true,
+        required: true,
         unique: true
     },
 
     mobile: {
 
         type: String,
-        unique: true
+        unique: true,
+        required: true,
     },
 
     address: {

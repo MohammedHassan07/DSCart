@@ -2,6 +2,8 @@ import 'dotenv/config'
 import userModel from '../models/user.model.js'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import responseHandler from '../utils/responseHandler.js'
+import constants from '../config/constants.js'
 
 const register = async (req, res) => {
 
@@ -13,18 +15,17 @@ const register = async (req, res) => {
         if (!name || !email || !mobile || !address || !password) return res.status(400).json({ status: 'failed', message: 'All fields are required' })
 
         // check if user is already present
-        const user = await userModel.findOne({ email })
+        const user = await userModel.findOne({ $or: [{ email }, { mobile }] })
 
-        if (user) return res.status(409).json({ status: 'failed', message: 'User is already present with this email' })
+        if (user) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is already present with this email')
 
-        const newUser = new userModel({ name, email, mobile, isAdmin: false, address, password })
+        const newUser = new userModel({ name, email, mobile, isAdmin: false, address, password, mobile })
         await newUser.save()
 
-        res.status(201).json({ status: 'success', message: 'User Registered successfully' })
-
+        responseHandler(res, constants.OK, 'success', 'User Registered successfully')
     } catch (error) {
 
-        res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+        responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
         console.log(error)
     }
 }

@@ -2,6 +2,8 @@ import orderModel from "../models/order.model.js"
 import { Types } from "mongoose"
 import socket from "../config/socket.js"
 import orderService from '../services/order.service.js'
+import responseHandler from "../utils/responseHandler.js"
+import constants from "../config/constants.js"
 
 const createOrder = async (req, res) => {
 
@@ -12,7 +14,8 @@ const createOrder = async (req, res) => {
         const userId = req.userId
 
         if (!products || products.length < 1 || !totalPrice || deliveryCharge == null || !address || !netTotal || !totalQuantity || !userName || !userEmail) {
-            return res.status(400).json({ flag: false, message: 'All fields are required' })
+
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
         }
 
         const lastOrder = await orderService.lastOrderService()
@@ -59,7 +62,8 @@ const createOrder = async (req, res) => {
         savedOrder.products = savedHistory;
         await savedOrder.save();
 
-        res.status(201).json({ flag: true, message: 'Order created successfully', order: savedOrder })
+        // send FCM
+        responseHandler(res, constants.CREATED, 'success', 'Order created successfully', savedOrder)
 
         // TODO: implement realtime communication to send the npotification to the shop owner
         // const io = socket.getIo()
@@ -69,7 +73,7 @@ const createOrder = async (req, res) => {
         // io.emit('order:creted', 'Order created successfully', { user, orderId: ord._id })
     } catch (error) {
 
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
         console.log(error)
     }
 }
@@ -78,181 +82,206 @@ const getAllOrders = async (req, res) => {
 
     try {
 
+        let { page, limit, search } = req.body
         const userId = new Types.ObjectId(req.userId)
 
-        const orders = await orderModel.find({ userId })
-            .populate({ path: 'products', select: '-description -ingredients' })
+        let filter = {}
+        if (req.role)
+            filter.userId = userId
 
-        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No order found' })
+        page = parseInt(page);
+        limit = parseInt(limit);
+        if (isNaN(page) || page < 1) page = 1;
+        if (isNaN(limit) || limit < 1 || limit > 100) limit = 10;
 
-        res.status(200).json({ flag: true, orders, message: 'orders found' })
+        if (search && search.trim() !== "") {
+            const searchRegex = { $regex: search, $options: "i" };
+            filter.$or = [
+                { "products.productName": searchRegex },
+                { "products.productCategory": searchRegex },
+                { orderNumber: searchRegex },
+            ];
+        }
+        const { orders, totalOrders, totalPages } = await orderService.getAllOrderService(filter, page, limit)
+
+        if (!orders || orders.lenght < 1) return responseHandler(res, constants.OK, 'failed', 'Orders not found')
+
+        responseHandler(res, constants.OK, 'success', 'Orders found', { orders, totalOrders, totalPages })
     } catch (error) {
-
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
+        responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
         console.log(error)
     }
 
 }
 
-const getOrdersByCategory = async (req, res) => {
+const getOrderDetails = async (req, res) => {
 
-    try {
+    const userId = new Types.ObjectId(req.userId)
 
-        const userId = new Types.ObjectId(req.userId)
-        const category = req.params.category
+    // const order = await 
 
-        const orders = await orderModel.aggregate([
-
-            { $match: { userId } },
-            {
-                $lookup: {
-
-                    from: 'products',
-                    localField: 'products',
-                    as: 'products',
-                    foreignField: '_id'
-                }
-            },
-            {
-                $match: { 'products.category': category }
-            },
-            {
-                $project: {
-
-                    description: 0,
-                    'products.description': 0,
-                    'products.ingredients': 0
-                }
-            }
-        ])
-
-        // const orders = await orderModel.find({ userId })
-        //     .populate({ path: 'products', select: '-description -ingredients' })
-
-        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
-
-        // const categoryOrders = orders.filter(order =>
-        //     order.products.some(p => p.category === category))
-
-        res.status(200).json({ flag: true, orders })
-
-    } catch (error) {
-
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
-    }
 }
 
-const getOrderById = async (req, res) => {
+// const getOrdersByCategory = async (req, res) => {
 
-    try {
+//     try {
 
-        const id = req.params.id
+//         const userId = new Types.ObjectId(req.userId)
+//         const category = req.params.category
 
-        const order = await orderModel.findOne({ _id: id }).populate({ path: 'products', select: '-ingredients -description' })
+//         const orders = await orderModel.aggregate([
 
-        // const orders = await orderModel.find({ userId })
-        //     .populate({ path: 'products', select: '-description -ingredients' })
+//             { $match: { userId } },
+//             {
+//                 $lookup: {
 
-        if (!order) return res.status(404).json({ flag: false, message: 'No orders found' })
+//                     from: 'products',
+//                     localField: 'products',
+//                     as: 'products',
+//                     foreignField: '_id'
+//                 }
+//             },
+//             {
+//                 $match: { 'products.category': category }
+//             },
+//             {
+//                 $project: {
 
-        // const categoryOrders = orders.filter(order =>
-        //     order.products.some(p => p.category === category))
+//                     description: 0,
+//                     'products.description': 0,
+//                     'products.ingredients': 0
+//                 }
+//             }
+//         ])
 
-        res.status(200).json({ flag: true, order })
+//         // const orders = await orderModel.find({ userId })
+//         //     .populate({ path: 'products', select: '-description -ingredients' })
 
-    } catch (error) {
+//         if (orders.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
 
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
-    }
-}
+//         // const categoryOrders = orders.filter(order =>
+//         //     order.products.some(p => p.category === category))
 
-const getOrdersByName = async (req, res) => {
+//         res.status(200).json({ status: 'success', orders })
 
-    try {
+//     } catch (error) {
 
-        const userId = new Types.ObjectId(req.userId)
-        const name = req.params.name
+//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+//         console.log(error)
+//     }
+// }
 
-        const orders = await orderModel.aggregate([
+// const getOrderById = async (req, res) => {
 
-            { $match: { userId } },
-            {
-                $lookup: {
+//     try {
 
-                    from: 'products',
-                    localField: 'products',
-                    as: 'products',
-                    foreignField: '_id'
-                }
-            },
-            {
-                $match: { 'products.name': name }
-            },
-            {
-                $project: {
+//         const id = req.params.id
 
-                    description: 0,
-                    'products.description': 0,
-                    'products.ingredients': 0
-                }
-            }
-        ])
+//         const order = await orderModel.findOne({ _id: id }).populate({ path: 'products', select: '-ingredients -description' })
 
-        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+//         // const orders = await orderModel.find({ userId })
+//         //     .populate({ path: 'products', select: '-description -ingredients' })
 
-        res.status(200).json({ flag: true, orders })
+//         if (!order) return res.status(404).json({ status: 'failed', message: 'No orders found' })
 
-    } catch (error) {
+//         // const categoryOrders = orders.filter(order =>
+//         //     order.products.some(p => p.category === category))
 
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
-    }
-}
+//         res.status(200).json({ status: 'success', order })
 
-const getOrderByDate = async (req, res) => {
-    try {
+//     } catch (error) {
 
-        const userId = new Types.ObjectId(req.userId)
-        const userDate = new Date(req.query.date)
+//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+//         console.log(error)
+//     }
+// }
 
-        const month = userDate.getMonth() + 1
-        const date = userDate.getUTCDate() + '-' + month + '-' + userDate.getFullYear()
+// const getOrdersByName = async (req, res) => {
 
-        const orders = await orderModel.find({ userId })
-            .populate({ path: 'products', select: '-description -ingredients' })
+//     try {
 
-        if (orders.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+//         const userId = new Types.ObjectId(req.userId)
+//         const name = req.params.name
 
-        const filteredOrder = orders.filter(order => {
+//         const orders = await orderModel.aggregate([
 
-            let orderDate = new Date(order.createdAt)
+//             { $match: { userId } },
+//             {
+//                 $lookup: {
 
-            let month = orderDate.getMonth() + 1
-            orderDate = orderDate.getUTCDate() + '-' + month + '-' + orderDate.getFullYear()
+//                     from: 'products',
+//                     localField: 'products',
+//                     as: 'products',
+//                     foreignField: '_id'
+//                 }
+//             },
+//             {
+//                 $match: { 'products.name': name }
+//             },
+//             {
+//                 $project: {
 
-            if (date === orderDate)
-                return order
-        })
+//                     description: 0,
+//                     'products.description': 0,
+//                     'products.ingredients': 0
+//                 }
+//             }
+//         ])
 
-        if (filteredOrder.length < 1) return res.status(404).json({ flag: false, message: 'No orders found' })
+//         if (orders.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
+
+//         res.status(200).json({ status: 'success', orders })
+
+//     } catch (error) {
+
+//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+//         console.log(error)
+//     }
+// }
+
+// const getOrderByDate = async (req, res) => {
+//     try {
+
+//         const userId = new Types.ObjectId(req.userId)
+//         const userDate = new Date(req.query.date)
+
+//         const month = userDate.getMonth() + 1
+//         const date = userDate.getUTCDate() + '-' + month + '-' + userDate.getFullYear()
+
+//         const orders = await orderModel.find({ userId })
+//             .populate({ path: 'products', select: '-description -ingredients' })
+
+//         if (orders.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
+
+//         const filteredOrder = orders.filter(order => {
+
+//             let orderDate = new Date(order.createdAt)
+
+//             let month = orderDate.getMonth() + 1
+//             orderDate = orderDate.getUTCDate() + '-' + month + '-' + orderDate.getFullYear()
+
+//             if (date === orderDate)
+//                 return order
+//         })
+
+//         if (filteredOrder.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
 
 
-        res.json({ flag: true, message: 'Order found', order: filteredOrder })
+//         res.json({ status: 'success', message: 'Order found', order: filteredOrder })
 
-    } catch (error) {
+//     } catch (error) {
 
-        res.status(500).json({ flag: false, message: 'Internal Server Error' })
-        console.log(error)
-    }
-}
+//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+//         console.log(error)
+//     }
+// }
 
-export {
+export default {
     createOrder,
     getAllOrders,
-    getOrdersByCategory,
-    getOrderById,
-    getOrdersByName,
-    getOrderByDate
+    getOrderDetails
+    // getOrdersByCategory,
+    // getOrderById,
+    // getOrdersByName,
+    // getOrderByDate
 }

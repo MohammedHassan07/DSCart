@@ -23,8 +23,44 @@ async function createOrderService(data) {
     return order
 }
 
+// pagination
+async function getAllOrderService(filter, page, limit) {
+
+    const result = await orderModel.aggregate([
+        { $match: filter },
+        {
+            $lookup: {
+              from: "orderhistories", 
+              localField: "_id",
+              foreignField: "orderId",
+              as: "products"
+            }
+          },
+        { $sort: { createdAt: -1 } },
+        {
+            $facet: {
+                metadata: [{ $count: "total" }],
+                data: [
+                    { $skip: (page - 1) * limit },
+                    { $limit: limit },
+                ],
+            },
+        },
+    ])
+
+    const orders = result[0]?.data || [];
+    const totalOrders = result[0]?.metadata[0]?.total || 0;
+    const totalPages = Math.ceil(totalOrders / limit);
+
+    return {orders, totalOrders, totalPages}
+}
+
+
+
+
 export default {
     insertManyOrderHistory,
     lastOrderService,
-    createOrderService
+    createOrderService,
+    getAllOrderService,
 }
