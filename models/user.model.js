@@ -34,6 +34,10 @@ const userSchema = new Schema({
     address: {
         type: String,
         required: true
+    },
+    otp: {
+        type: String,
+        default: ""
     }
 })
 

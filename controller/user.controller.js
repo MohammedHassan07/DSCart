@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import responseHandler from '../utils/responseHandler.js'
 import constants from '../config/constants.js'
+import sendMail from '../utils/sendOtpVerificationMail.js'
+import userService from '../services/user.service.js'
 
 const register = async (req, res) => {
 
@@ -19,10 +21,13 @@ const register = async (req, res) => {
 
         if (user) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is already present with this email')
 
-        const newUser = new userModel({ name, email, mobile, isAdmin: false, address, password, mobile })
+        const otp = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+
+        const newUser = new userModel({ name, email, mobile, isAdmin: false, address, password, mobile, otp: otp })
         await newUser.save()
 
-        responseHandler(res, constants.OK, 'success', 'User Registered successfully')
+        await sendMail(email, otp)
+        responseHandler(res, constants.OK, 'success', 'OTP sent to your email')
     } catch (error) {
 
         responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
@@ -63,4 +68,30 @@ const login = async (req, res) => {
         console.log(error)
     }
 }
-export { register, login }
+
+
+const verifyOTP = async (req, res) => {
+    const { email, otp } = req.body
+
+    if (!email || !otp) return res.status(400).json({ status: 'failed', message: 'All fields are required' })
+
+    const user = await userService.findUser(email)
+
+    if (!user) {
+        return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is not present with this email')
+    }
+
+    if (otp !== user.otp) { return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Did`nt matche OTP') }
+
+
+    // generate token
+    const SECRET_KEY = process.env.SECRET_KEY
+    const token = jwt.sign({ userId: user._id.toString(), role: user.isAdmin }, SECRET_KEY)
+
+    responseHandler(res, constants.OK, 'success', 'Email varified', token)
+}
+export {
+    register,
+    login,
+    verifyOTP
+}
