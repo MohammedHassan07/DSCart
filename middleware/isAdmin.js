@@ -1,5 +1,3 @@
-import userModel from "../models/user.model.js";
-
 const isAdmin = async (req, res, next) => {
 
     if (!req.role)

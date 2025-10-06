@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs'
 import userModel from '../models/user.model.js'
 import responseHandler from '../utils/responseHandler.js'
 import constants from '../config/constants.js'
+import userService from '../services/user.service.js'
 
 const register = async (req, res) => {
 
@@ -14,8 +15,6 @@ const register = async (req, res) => {
 
         // check is Empty
         if (!name || !email || !password || !address || !mobile) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
-
-            console.log(req.body)
         // check if user is already present
         const user = await userModel.findOne({ $or: [{ email }, { mobile }] })
 
@@ -63,4 +62,28 @@ const login = async (req, res) => {
         console.log(error)
     }
 }
-export { register, login }
+
+// save FCM token
+const saveFCMToken = async (req, res) => {
+
+    const { FCMToken, email } = req.body
+
+    if (!FCMToken) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
+
+    const filter = {
+        email, isAdmin: true
+    }
+    const admin = await userService.findAdmin(filter)
+
+    if (!admin) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Admin is not registered')
+
+    admin.FCMToken = FCMToken
+
+    await admin.save()
+    responseHandler(res, constants.OK, 'success', 'FCM token updated')
+}
+export {
+    register,
+    login,
+    saveFCMToken,
+}

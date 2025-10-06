@@ -4,6 +4,8 @@ import socket from "../config/socket.js"
 import orderService from '../services/order.service.js'
 import responseHandler from "../utils/responseHandler.js"
 import constants from "../config/constants.js"
+import sendFCM from '../utils/sendFCM.js'
+import userService from "../services/user.service.js"
 
 const createOrder = async (req, res) => {
 
@@ -63,13 +65,20 @@ const createOrder = async (req, res) => {
         await savedOrder.save();
 
         // send FCM
+        const title = 'New Order Received!'
+        const body = `A new order has been placed by ${userName}.`
+
+        const filter = {
+            isAdmin: true
+        }
+        const admin = await userService.findAdmin(filter)
+    
+        await sendFCM(admin.FCMToken, title, body)
         responseHandler(res, constants.CREATED, 'success', 'Order created successfully', savedOrder)
 
         // TODO: implement realtime communication to send the npotification to the shop owner
         // const io = socket.getIo()
-
         // const user = await userModel.findOne({ _id: userId }).select(['-password', '-isAdmin'])
-
         // io.emit('order:creted', 'Order created successfully', { user, orderId: ord._id })
     } catch (error) {
 

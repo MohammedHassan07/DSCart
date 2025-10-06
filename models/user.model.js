@@ -38,6 +38,11 @@ const userSchema = new Schema({
     otp: {
         type: String,
         default: ""
+    },
+
+    FCMToken: {
+        type: String,
+        default: ''
     }
 })
 
