@@ -9,21 +9,21 @@ const addProduct = async (req, res) => {
 
     try {
 
-        const fileName = req.file.filename
+        // const fileName = req.file.filename
 
-        const { name, price, category, description, ingredients } = req.body
+        const { name, price, category, description, ingredients, imageURL } = req.body
 
         // check if the file is sent from the user or not
-        if (!req.file) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Image is required')
+        // if (!req.file) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Image is required')
 
         // check empty values
-        if (!name || !price || !category) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
+        if (!name || !price || !category || !imageURL || !description) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
 
         // change the image URL with any CDN
         const newProduct = new productModel({
 
             name, price, category,
-            imageURL: req.file.path,
+            imageURL: imageURL,
             description,
             ingredients
         })

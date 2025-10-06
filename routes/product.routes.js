@@ -6,7 +6,7 @@ import isAdmin from '../middleware/isAdmin.js'
 
 const route = express.Router()
 
-route.post('/add-product', verfiyToken, isAdmin, uploadFoodImage.single('foodImage'), addProduct)
+route.post('/add-product', verfiyToken, isAdmin, addProduct)
 
 route.post('/get-products', getAllProducts)
 
