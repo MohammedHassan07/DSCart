@@ -12,6 +12,11 @@ const orderHistorySchema = new Schema({
         require: true,
         ref: 'order'
     },
+    productId: {
+        type: Schema.Types.ObjectId,
+        require: true,
+        ref: 'product'
+    },
     userName: {
         type: String
     },

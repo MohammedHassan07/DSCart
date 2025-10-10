@@ -4,9 +4,11 @@ import connectDataBase from './config/db.js'
 import http from 'http'
 import socket from './config/socket.js'
 import jwt from 'jsonwebtoken'
+import morgan from 'morgan'
 
 const app = express()
 app.use(express.json())
+app.use(morgan('dev'))
 
 const httpServer = http.createServer(app)
 const io = socket.initSocket(httpServer)

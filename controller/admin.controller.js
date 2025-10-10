@@ -39,7 +39,7 @@ const login = async (req, res) => {
         const { email, password } = req.body
 
         // check is Empty
-        if (!email || !password) return res.status(400).json({ status: 'failed', message: 'All fields are required' })
+        if (!email || !password) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
 
         // check if user is already present
         const user = await userModel.findOne({ email, isAdmin: true })

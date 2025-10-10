@@ -55,6 +55,7 @@ const createOrder = async (req, res) => {
                 productQuantity: product.productQuantity,
                 orderNumber: codePrefix + String(nextNumber).padStart(6, '0'),
                 orderId: savedOrder._id,
+                productId: new Types.ObjectId(product.productId),
             }
 
             newOrderHistory.push(ord)
@@ -72,7 +73,7 @@ const createOrder = async (req, res) => {
             isAdmin: true
         }
         const admin = await userService.findAdmin(filter)
-    
+
         await sendFCM(admin.FCMToken, title, body)
         responseHandler(res, constants.CREATED, 'success', 'Order created successfully', savedOrder)
 

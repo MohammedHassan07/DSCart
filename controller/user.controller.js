@@ -14,7 +14,8 @@ const register = async (req, res) => {
         const { name, email, mobile, address, password } = req.body
 
         // check is Empty
-        if (!name || !email || !mobile || !address || !password) return res.status(400).json({ status: 'failed', message: 'All fields are required' })
+        if (!name || !email || !mobile || !address || !password) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
+
 
         // check if user is already present
         const user = await userModel.findOne({ $or: [{ email }, { mobile }] })
@@ -42,7 +43,7 @@ const login = async (req, res) => {
         const { field, password } = req.body
 
         // check is Empty
-        if (!field || !password) return res.status(400).json({ status: 'failed', message: 'All fields are required' })
+        if (!field || !password) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
 
         // check if user is already present
         const user = await userModel.findOne({
@@ -51,20 +52,21 @@ const login = async (req, res) => {
         })
 
 
-        if (!user) return res.status(404).json({ status: 'failed', message: 'User is not present, Please register yourself' })
+        if (!user) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is not present, Please register yourself')
 
         const status = await bcrypt.compare(password, user.password)
-        if (!status) return res.status(401).json({ status: 'failed', messae: 'Invalid Credentials' })
+        if (!status) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Invalid Credentials')
 
         // generate token
         const SECRET_KEY = process.env.SECRET_KEY
         const token = jwt.sign({ userId: user._id.toString(), role: user.isAdmin }, SECRET_KEY)
 
-        res.status(200).json({ status: 'success', message: 'User logged in', token })
+        responseHandler(res, constants.OK, 'success', 'User logged in', {token})
 
     } catch (error) {
 
-        res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+        responseHandler(res, constants.BAD_REQUEST, 'failed', 'Internal Server Error')
+
         console.log(error)
     }
 }
@@ -73,7 +75,7 @@ const login = async (req, res) => {
 const verifyOTP = async (req, res) => {
     const { email, otp } = req.body
 
-    if (!email || !otp) return res.status(400).json({ status: 'failed', message: 'All fields are required' })
+    if (!email || !otp) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
 
     const user = await userService.findUser(email)
 

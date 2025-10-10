@@ -16,7 +16,7 @@ export default async function sendMail(email, otp) {
     })
     
     await transporter.sendMail({
-        from: `"MediSafe" <${DS_EMAIL}>`,
+        from: `"DSCart" <${DS_EMAIL}>`,
         to: email,
         subject: "Your DSCart OTP Code",
         html: otpTemplate(otp),

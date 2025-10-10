@@ -28,10 +28,8 @@ const addProduct = async (req, res) => {
             ingredients
         })
 
-        await newProduct.save()
-        res.status(constants.CREATED).json({ status: 'success', message: 'Product Added Successfully' })
-
-
+        const prod = await newProduct.save()
+        responseHandler(res, constants.CREATED, 'success', 'Product Added Successfully', { product: prod })
     } catch (error) {
 
         responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
@@ -62,12 +60,12 @@ const getAllProducts = async (req, res) => {
 
         if (products.length < 1) {
 
-            return responseHandler(res, constants.OK, 'failed', 'No products found' )
+            return responseHandler(res, constants.OK, 'failed', 'No products found')
         }
 
         responseHandler(res, constants.OK, 'success', 'Products found', products)
     } catch (error) {
-       
+
         responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
         console.log(error)
     }
@@ -114,17 +112,17 @@ const getProductById = async (req, res) => {
         const productId = req.params.id
 
         if (!Types.ObjectId.isValid(productId)) {
-            return res.status(constants.BAD_REQUEST).json({ status: 'failed', message: "Invalid Product ID" });
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Invalid Product ID')
         }
 
         const product = await productsService.getProductByIdService(productId)
 
-        if (!product) return res.status(404).json({ status: 'failed', message: 'No products found' })
+        if (!product) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'No products found')
 
-        res.status(200).json({ status: 'success', product, message: 'Product found' })
+        responseHandler(res, constants.OK, 'success', 'Product found', product)
 
     } catch (error) {
-        res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
+        responseHandler(res, constants.SERVER_ERROR, 'failed', 'Internal Server Error')
         console.log(error)
     }
 }
