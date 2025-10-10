@@ -49,7 +49,7 @@ const login = async (req, res) => {
         const user = await userModel.findOne({
             isAdmin: false,
             $or: [{ email: field }, { mobile: field }]
-        })
+        }).select(['-otp', '-FCMToken'])
 
 
         if (!user) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is not present, Please register yourself')
@@ -61,7 +61,7 @@ const login = async (req, res) => {
         const SECRET_KEY = process.env.SECRET_KEY
         const token = jwt.sign({ userId: user._id.toString(), role: user.isAdmin }, SECRET_KEY)
 
-        responseHandler(res, constants.OK, 'success', 'User logged in', {token})
+        responseHandler(res, constants.OK, 'success', 'User logged in', {token, user})
 
     } catch (error) {
 
