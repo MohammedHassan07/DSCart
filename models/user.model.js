@@ -43,6 +43,11 @@ const userSchema = new Schema({
     FCMToken: {
         type: String,
         default: ''
+    },
+
+    isVerified: {
+        type: Boolean,
+        default: false
     }
 })
 

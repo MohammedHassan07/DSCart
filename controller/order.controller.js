@@ -96,7 +96,7 @@ const getAllOrders = async (req, res) => {
         const userId = new Types.ObjectId(req.userId)
 
         let filter = {}
-        if (req.role)
+        if (!req.role)
             filter.userId = userId
 
         page = parseInt(page);

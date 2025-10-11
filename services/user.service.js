@@ -2,7 +2,7 @@ import userModel from "../models/user.model.js"
 
 async function findUser(email) {
 
-    const user = await userModel.findOne({ email })
+    const user = await userModel.findOne({ email }).select(['-FCMToken', '-password'])
 
     return user
 }

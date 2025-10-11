@@ -57,11 +57,21 @@ const login = async (req, res) => {
         const status = await bcrypt.compare(password, user.password)
         if (!status) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Invalid Credentials')
 
+        // check is Verified
+        if (!user.isVerified) {
+            const otp = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+            user.otp = otp
+            await user.save()
+
+            await sendMail(user.email, otp)
+            return responseHandler(res, constants.OK, 'success', 'OTP sent to your email', { isVerified: user.isVerified })
+        }
+
         // generate token
         const SECRET_KEY = process.env.SECRET_KEY
         const token = jwt.sign({ userId: user._id.toString(), role: user.isAdmin }, SECRET_KEY)
 
-        responseHandler(res, constants.OK, 'success', 'User logged in', {token, user})
+        responseHandler(res, constants.OK, 'success', 'User logged in', { token, user })
 
     } catch (error) {
 
@@ -85,13 +95,16 @@ const verifyOTP = async (req, res) => {
 
     if (otp !== user.otp) { return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Did`nt matche OTP') }
 
+    user.isVerified = true
+    await user.save()
 
     // generate token
     const SECRET_KEY = process.env.SECRET_KEY
     const token = jwt.sign({ userId: user._id.toString(), role: user.isAdmin }, SECRET_KEY)
 
-    responseHandler(res, constants.OK, 'success', 'Email varified', token)
+    responseHandler(res, constants.OK, 'success', 'User varified', { token, user })
 }
+
 export {
     register,
     login,
