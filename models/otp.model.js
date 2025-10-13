@@ -37,7 +37,7 @@ const otpSchema = new Schema({
         type: String,
         default: ""
     },
-    ttl: { type: Date, default: Date.now, expires: 60 }
+    ttl: { type: Date, default: Date.now, expires: 600 }
     
 }, { timestamps: true })
 

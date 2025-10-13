@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken'
 import 'dotenv/config'
-import adminModel from '../models/admin.model.js'
 import bcrypt from 'bcryptjs'
 import userModel from '../models/user.model.js'
 import responseHandler from '../utils/responseHandler.js'
@@ -21,7 +20,9 @@ const register = async (req, res) => {
         // console.log(user)
         if (user) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is already registered')
 
-        const newUser = new userModel({ name, email, password, isAdmin: true, address, mobile, isVerified: true })
+            const hash = await bcrypt.hash(password, 10)
+
+        const newUser = new userModel({ name, email, password: hash, isAdmin: true, address, mobile, isVerified: true })
         await newUser.save()
 
         return responseHandler(res, constants.OK, 'success', 'User Registered successfully', { email, name, mobile })

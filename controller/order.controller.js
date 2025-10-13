@@ -15,7 +15,7 @@ const createOrder = async (req, res) => {
 
         const userId = req.userId
 
-        if (!products || products.length < 1 || !totalPrice || deliveryCharge == null || !address || !netTotal || !totalQuantity || !userName || !userEmail) {
+        if (!products || products.length < 1 || !totalPrice || !deliveryCharge || !address || !netTotal || !totalQuantity || !userName || !userEmail) {
 
             return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
         }

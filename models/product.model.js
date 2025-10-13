@@ -23,7 +23,7 @@ const productSchema = new Schema({
 
     description: String,
 
-    ingredients: String
-})
+    ingredients: [String]
+}, { timestamps: true })
 
 export default model('product', productSchema)
