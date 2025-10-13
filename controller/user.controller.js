@@ -6,6 +6,7 @@ import responseHandler from '../utils/responseHandler.js'
 import constants from '../config/constants.js'
 import sendMail from '../utils/sendOtpVerificationMail.js'
 import userService from '../services/user.service.js'
+import otpModel from '../models/otp.model.js'
 
 const register = async (req, res) => {
 
@@ -16,15 +17,13 @@ const register = async (req, res) => {
         // check is Empty
         if (!name || !email || !mobile || !address || !password) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
 
-
-        // check if user is already present
         const user = await userModel.findOne({ $or: [{ email }, { mobile }] })
 
         if (user) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is already present with this email')
 
         const otp = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
 
-        const newUser = new userModel({ name, email, mobile, isAdmin: false, address, password, mobile, otp: otp })
+        const newUser = new otpModel({ name, email, mobile, isAdmin: false, address, password, mobile, otp: otp })
         await newUser.save()
 
         await sendMail(email, otp)
@@ -58,14 +57,14 @@ const login = async (req, res) => {
         if (!status) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Invalid Credentials')
 
         // check is Verified
-        if (!user.isVerified) {
-            const otp = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
-            user.otp = otp
-            await user.save()
+        // if (!user.isVerified) {
+        //     const otp = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
+        //     user.otp = otp
+        //     await user.save()
 
-            await sendMail(user.email, otp)
-            return responseHandler(res, constants.OK, 'success', 'OTP sent to your email', { isVerified: user.isVerified })
-        }
+        //     await sendMail(user.email, otp)
+        //     return responseHandler(res, constants.OK, 'success', 'OTP sent to your email', { isVerified: user.isVerified })
+        // }
 
         // generate token
         const SECRET_KEY = process.env.SECRET_KEY
@@ -87,16 +86,31 @@ const verifyOTP = async (req, res) => {
 
     if (!email || !otp) return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
 
-    const user = await userService.findUser(email)
+    // const user = await userService.findUser(email)
+    const existingUser = await otpModel.findOne({ email })
 
-    if (!user) {
+    if (!existingUser) {
         return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is not present with this email')
     }
 
-    if (otp !== user.otp) { return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Did`nt matche OTP') }
+    console.log(existingUser)
+    if (otp !== existingUser.otp) { return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Did`nt matche OTP') }
 
-    user.isVerified = true
+    const user = new userModel({
+
+        name: existingUser.name,
+        email: existingUser.email,
+        mobile: existingUser.mobile,
+        isAdmin: false,
+        address: existingUser.address,
+        password: existingUser.password,
+        mobile: existingUser.mobile
+        // isVerified: true
+    })
     await user.save()
+
+    // user.isVerified = true
+    // await existingUser.save()
 
     // generate token
     const SECRET_KEY = process.env.SECRET_KEY

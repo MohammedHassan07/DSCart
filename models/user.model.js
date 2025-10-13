@@ -35,10 +35,6 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    otp: {
-        type: String,
-        default: ""
-    },
 
     FCMToken: {
         type: String,
@@ -49,21 +45,23 @@ const userSchema = new Schema({
         type: Boolean,
         default: false
     }
+}, {
+    timestamps: true
 })
 
-userSchema.pre("save", async function (next) {
+// userSchema.pre("save", async function (next) {
 
-    try {
+//     try {
 
-        if (this.isModified("password")) {
+//         if (this.isModified("password")) {
 
-            this.password = await bcrypt.hash(this.password, 10)
-        }
+//             this.password = await bcrypt.hash(this.password, 10)
+//         }
 
-        next()
-    } catch (err) {
-        console.log(err)
-    }
-})
+//         next()
+//     } catch (err) {
+//         console.log(err)
+//     }
+// })
 
 export default model('user', userSchema)
