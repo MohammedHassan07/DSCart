@@ -1,13 +1,11 @@
 import express from 'express'
 import verfiyToken from '../middleware/verifyToken.js'
-import orders from '../controller/order.controller.js'
+import inventoryController from '../controller/inventory.controller.js'
 
 const route = express.Router()
 
 route.use(verfiyToken)
 
-route.post('/create', orders.createOrder)
-
-route.post('/get-orders', orders.getAllOrders)
+route.post('/add-inventory', inventoryController.addInventory)
 
 export default route

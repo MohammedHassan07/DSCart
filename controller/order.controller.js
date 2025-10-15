@@ -64,7 +64,7 @@ const createOrder = async (req, res) => {
         }
 
         const savedHistory = await orderService.insertManyOrderHistory(newOrderHistory);
-        savedOrder.products = savedHistory;
+        savedOrder.products = savedHistory.map(h => h._id);;
         await savedOrder.save();
 
         // send FCM
@@ -76,7 +76,7 @@ const createOrder = async (req, res) => {
         }
         const admin = await userService.findAdmin(filter)
 
-        await sendFCM(admin.FCMToken, title, body)
+        // await sendFCM(admin.FCMToken, title, body)
         responseHandler(res, constants.CREATED, 'success', 'Order created successfully', savedOrder)
 
         // TODO: implement realtime communication to send the npotification to the shop owner
@@ -98,7 +98,9 @@ const getAllOrders = async (req, res) => {
         let { page, limit, search } = req.body
         const userId = new Types.ObjectId(req.userId)
 
-        let filter = {}
+        let filter = {
+            isCancelled: false
+        }
         if (!req.role)
             filter.userId = userId
 
@@ -135,116 +137,9 @@ const getOrderDetails = async (req, res) => {
 
 }
 
-const cancelOrder = async (req, res) => {
-    try {
-
-        const userId = req.userId
-        const { products, totalPrice, netTotal, userName, userEmail, totalQuantity, inventoryType } = req.body
-
-        if (!products || products.length < 1 || !totalPrice || !netTotal || !totalQuantity || !userName || !userEmail || !inventoryType) {
-
-            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
-        }
-
-        const order = await orderService.getOrderDetailsService(filter)
-
-        if (!order) {
-            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Order not found')
-        }
-        // next number 
-        const lastInventory = await inventoryService.lastInventoryService()
-        let nextNumber = 1
-        const codePrefix = 'INV'
-        if (lastInventory && lastInventory.orderNumber) {
-
-            const lastNum = parseInt(lastInventory.inventoryNumber.replace(codePrefix, ''), 10);
-            nextNumber = lastNum + 1;
-        }
-
-        const newInventory = {
-            userId: new Types.ObjectId(userId),
-            userName: userName,
-            userEmail: userEmail,
-            totalPrice,
-            netTotal,
-            totalQuantity,
-            inventoryNumber: codePrefix + String(nextNumber).padStart(6, '0')
-        }
-        const savedInventory = await inventoryService.addInventoryService(newInventory)
-
-        let newInventoryHistory = []
-        for (const product of products) {
-
-            const ord = {
-
-                userId: new Types.ObjectId(userId),
-                productName: product.productName,
-                productCategory: product.productCategory,
-                productPrice: product.productPrice,
-                totalPrice: product.totalPrice,
-                productQuantity: product.productQuantity,
-                inventoryNumber: codePrefix + String(nextNumber).padStart(6, '0'),
-                orderId: savedInventory._id,
-                productId: new Types.ObjectId(product.productId),
-            }
-
-            newInventoryHistory.push(ord)
-        }
-
-        const savedHistory = await inventoryService.addInventoryHistoryService(newInventoryHistory);
-        savedInventory.products = savedHistory;
-        await savedInventory.save();
-
-
-
-        const updatedProducts = order.products.filter(
-            (product) => product.productId.toString() !== productId.toString())
-
-        const removedProduct = order.products.find(
-            (product) => product.productId.toString() === productId.toString());
-
-
-        if (updatedProducts.length === order.products.length) {
-            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Product not found in this order');
-        }
-
-        updatedProducts.forEach((p) => {
-            totalPrice += p.totalPrice || 0;
-            totalQuantity += p.productQuantity || 0;
-            netTotal = totalPrice
-        });
-
-        // order.products = updatedProducts;
-        // order.totalPrice = totalPrice;
-        // order.totalQuantity = totalQuantity;
-        // order.netTotal = netTotal + order.deliveryCharge
-
-        order.isCancelled = true
-        await order.save();
-
-
-        // send FCM
-        const title = 'Order Cancelled!'
-        const body = `Order has been cancelled by ${userName}.`
-        const admin = await userService.findAdmin({ isAdmin: true })
-
-        await sendFCM(admin.FCMToken, title, body)
-
-        return responseHandler(res, constants.OK, 'success', 'Order cancelled  successfully', { order, cancelledProduct: removedProduct });
-
-    } catch (error) {
-        responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
-        console.log(error)
-    }
-}
 
 export default {
     createOrder,
     getAllOrders,
     getOrderDetails,
-    cancelOrder
-    // getOrdersByCategory,
-    // getOrderById,
-    // getOrdersByName,
-    // getOrderByDate
 }

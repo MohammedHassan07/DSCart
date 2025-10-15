@@ -1,6 +1,4 @@
 import { Schema, model } from "mongoose";
-import orderHistoryModel from "./orderHistory.model.js";
-
 
 const orderSchema = new Schema({
 
@@ -16,7 +14,7 @@ const orderSchema = new Schema({
         type: String
     },
 
-    products: [orderHistoryModel.schema],
+    products: [{type: Schema.Types.ObjectId, requried: true, ref: 'product'}],
 
     totalPrice: Number,
 
@@ -33,8 +31,13 @@ const orderSchema = new Schema({
 
     orderNumber: {
         type: String,
-        default: 'OR1'
+    },
+    
+    isCancelled: {
+        type: Boolean,
+        default: false
     }
+
 
 }, { timestamps: true })
 

@@ -1,7 +1,8 @@
 import inventoryModel from "../models/inventory.model.js";
+import inventoryHistoryModel from "../models/inventoryHistory.model.js";
 
 async function lastInventoryService() {
-    const lastInventory = await inventoryModel.find().sort({ createdAt: -1 })
+    const lastInventory = await inventoryModel.findOne().sort({ createdAt: -1 }).select("inventoryNumber")
     return lastInventory
 }
 
@@ -11,8 +12,8 @@ async function addInventoryService(data) {
 }
 
 async function addInventoryHistoryService(data) {
- 
-    const inventoryHistory = await inventoryModel.insertMany(data)
+
+    const inventoryHistory = await inventoryHistoryModel.insertMany(data)
     return inventoryHistory
 }
 

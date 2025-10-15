@@ -1,47 +1,26 @@
 import { Schema, model } from "mongoose";
-import orderHistoryModel from "./orderHistory.model.js";
-
+import inventoryHistoryModel from "./inventoryHistory.model.js";
 
 const inventorySchema = new Schema({
-
     userId: {
         type: Schema.Types.ObjectId,
-        require: true,
+        required: true,
         ref: 'user'
     },
-    userName: {
-        type: String
-    },
-    userEmail: {
-        type: String
-    },
-
-    products: [orderHistoryModel.schema],
-
-    totalPrice: Number,
-
-    // deliveryCharge: Number,
-
-    netTotal: Number,
-
-    totalQuantity: Number,
-
-    // address: {
-    //     type: String,
-    //     require: true
-    // },
-
-    inventoryNumber: {
-        type: String,
-        default: 'INV1'
-    },
-
+    userName: String,
+    userEmail: String,
     inventoryType: {
         type: String,
         enum: ['add', 'deduct'],
         required: true
+    },
+    products: [{ type: Schema.Types.ObjectId, ref: 'product', required: true }],
+    totalPrice: Number,
+    netTotal: Number,
+    totalQuantity: Number,
+    inventoryNumber: {
+        type: String,
     }
+}, { timestamps: true });
 
-}, { timestamps: true })
-
-export default model('inventory', inventorySchema)
+export default model("inventory", inventorySchema);
