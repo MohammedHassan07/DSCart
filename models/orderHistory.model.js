@@ -17,12 +17,6 @@ const orderHistorySchema = new Schema({
         require: true,
         ref: 'product'
     },
-    userName: {
-        type: String
-    },
-    userEmail: {
-        type: String
-    },
 
     productName: {
         type: String
@@ -46,6 +40,11 @@ const orderHistorySchema = new Schema({
     orderNumber: {
         type: String
     },
+
+    isCancelled: {
+        type: Boolean,
+        default: false
+    }
 }, { timestamps: true })
 
 export default model('orderHistory', orderHistorySchema)

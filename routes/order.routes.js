@@ -10,6 +10,8 @@ route.post('/create', orders.createOrder)
 
 route.post('/get-orders', orders.getAllOrders)
 
+route.post('/cancel-order', orders.cancelOrder)
+
 // route.post('/get-order-details', orders.getOrderDetails)
 
 // route.get('/category/:category', getOrdersByCategory)

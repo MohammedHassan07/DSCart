@@ -93,7 +93,6 @@ const verifyOTP = async (req, res) => {
         return responseHandler(res, constants.BAD_REQUEST, 'failed', 'User is not present with this email')
     }
 
-    console.log(existingUser)
     if (otp !== existingUser.otp) { return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Did`nt matche OTP') }
 
     const user = new userModel({
@@ -107,16 +106,16 @@ const verifyOTP = async (req, res) => {
         mobile: existingUser.mobile
         // isVerified: true
     })
-    await user.save()
+    const registeredUser = await user.save()
 
     // user.isVerified = true
     // await existingUser.save()
 
     // generate token
     const SECRET_KEY = process.env.SECRET_KEY
-    const token = jwt.sign({ userId: user._id.toString(), role: user.isAdmin }, SECRET_KEY)
+    const token = jwt.sign({ userId: registeredUser._id.toString(), role: registeredUser.isAdmin }, SECRET_KEY)
 
-    responseHandler(res, constants.OK, 'success', 'User varified', { token, user })
+    responseHandler(res, constants.OK, 'success', 'User varified', { token, registeredUser })
 }
 
 export {

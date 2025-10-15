@@ -30,12 +30,12 @@ async function getAllOrderService(filter, page, limit) {
         { $match: filter },
         {
             $lookup: {
-              from: "orderhistories", 
-              localField: "_id",
-              foreignField: "orderId",
-              as: "products"
+                from: "orderhistories",
+                localField: "_id",
+                foreignField: "orderId",
+                as: "products"
             }
-          },
+        },
         { $sort: { createdAt: -1 } },
         {
             $facet: {
@@ -52,7 +52,23 @@ async function getAllOrderService(filter, page, limit) {
     const totalOrders = result[0]?.metadata[0]?.total || 0;
     const totalPages = Math.ceil(totalOrders / limit);
 
-    return {orders, totalOrders, totalPages}
+    return { orders, totalOrders, totalPages }
+}
+
+// get order 
+async function getOrderDetailsService(filter) {
+
+    const order = await orderModel.findOne(filter)
+
+    return order
+}
+
+// get order history details
+async function deleteOrderHistoryDetailsService(filter) {
+
+    const orderHistory = await orderHistoryModel.deleteOne(filter)
+
+    return orderHistory
 }
 
 
@@ -63,4 +79,6 @@ export default {
     lastOrderService,
     createOrderService,
     getAllOrderService,
+    getOrderDetailsService,
+    deleteOrderHistoryDetailsService
 }

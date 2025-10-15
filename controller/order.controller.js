@@ -6,16 +6,17 @@ import responseHandler from "../utils/responseHandler.js"
 import constants from "../config/constants.js"
 import sendFCM from '../utils/sendFCM.js'
 import userService from "../services/user.service.js"
+import inventoryService from '../services/inventory.service.js'
 
 const createOrder = async (req, res) => {
 
     try {
 
-        const { products, totalPrice, deliveryCharge, address, netTotal, userName, userEmail, totalQuantity } = req.body
+        const { products, totalPrice, address, netTotal, userName, userEmail, totalQuantity } = req.body
 
         const userId = req.userId
 
-        if (!products || products.length < 1 || !totalPrice || !deliveryCharge || !address || !netTotal || !totalQuantity || !userName || !userEmail) {
+        if (!products || products.length < 1 || !totalPrice || !address || !netTotal || !totalQuantity || !userName || !userEmail) {
 
             return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
         }
@@ -29,11 +30,14 @@ const createOrder = async (req, res) => {
             nextNumber = lastNum + 1;
         }
 
+        const deliveryCharge = req.body.deliveryCharge || 0
         const newOrder = {
             userId,
+            userName: userName,
+            userEmail: userEmail,
             totalPrice,
             address,
-            deliveryCharge,
+            deliveryCharge: deliveryCharge,
             netTotal,
             totalQuantity,
             orderNumber: codePrefix + String(nextNumber).padStart(6, '0')
@@ -46,8 +50,6 @@ const createOrder = async (req, res) => {
             const ord = {
 
                 userId: new Types.ObjectId(userId),
-                userName: userName,
-                userEmail: userEmail,
                 productName: product.productName,
                 productCategory: product.productCategory,
                 productPrice: product.productPrice,
@@ -88,6 +90,7 @@ const createOrder = async (req, res) => {
     }
 }
 
+// TODO: add filter for isCanceled
 const getAllOrders = async (req, res) => {
 
     try {
@@ -132,164 +135,114 @@ const getOrderDetails = async (req, res) => {
 
 }
 
-// const getOrdersByCategory = async (req, res) => {
+const cancelOrder = async (req, res) => {
+    try {
 
-//     try {
+        const userId = req.userId
+        const { products, totalPrice, netTotal, userName, userEmail, totalQuantity, inventoryType } = req.body
 
-//         const userId = new Types.ObjectId(req.userId)
-//         const category = req.params.category
+        if (!products || products.length < 1 || !totalPrice || !netTotal || !totalQuantity || !userName || !userEmail || !inventoryType) {
 
-//         const orders = await orderModel.aggregate([
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
+        }
 
-//             { $match: { userId } },
-//             {
-//                 $lookup: {
+        const order = await orderService.getOrderDetailsService(filter)
 
-//                     from: 'products',
-//                     localField: 'products',
-//                     as: 'products',
-//                     foreignField: '_id'
-//                 }
-//             },
-//             {
-//                 $match: { 'products.category': category }
-//             },
-//             {
-//                 $project: {
+        if (!order) {
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Order not found')
+        }
+        // next number 
+        const lastInventory = await inventoryService.lastInventoryService()
+        let nextNumber = 1
+        const codePrefix = 'INV'
+        if (lastInventory && lastInventory.orderNumber) {
 
-//                     description: 0,
-//                     'products.description': 0,
-//                     'products.ingredients': 0
-//                 }
-//             }
-//         ])
+            const lastNum = parseInt(lastInventory.inventoryNumber.replace(codePrefix, ''), 10);
+            nextNumber = lastNum + 1;
+        }
 
-//         // const orders = await orderModel.find({ userId })
-//         //     .populate({ path: 'products', select: '-description -ingredients' })
+        const newInventory = {
+            userId: new Types.ObjectId(userId),
+            userName: userName,
+            userEmail: userEmail,
+            totalPrice,
+            netTotal,
+            totalQuantity,
+            inventoryNumber: codePrefix + String(nextNumber).padStart(6, '0')
+        }
+        const savedInventory = await inventoryService.addInventoryService(newInventory)
 
-//         if (orders.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
+        let newInventoryHistory = []
+        for (const product of products) {
 
-//         // const categoryOrders = orders.filter(order =>
-//         //     order.products.some(p => p.category === category))
+            const ord = {
 
-//         res.status(200).json({ status: 'success', orders })
+                userId: new Types.ObjectId(userId),
+                productName: product.productName,
+                productCategory: product.productCategory,
+                productPrice: product.productPrice,
+                totalPrice: product.totalPrice,
+                productQuantity: product.productQuantity,
+                inventoryNumber: codePrefix + String(nextNumber).padStart(6, '0'),
+                orderId: savedInventory._id,
+                productId: new Types.ObjectId(product.productId),
+            }
 
-//     } catch (error) {
+            newInventoryHistory.push(ord)
+        }
 
-//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
-//         console.log(error)
-//     }
-// }
-
-// const getOrderById = async (req, res) => {
-
-//     try {
-
-//         const id = req.params.id
-
-//         const order = await orderModel.findOne({ _id: id }).populate({ path: 'products', select: '-ingredients -description' })
-
-//         // const orders = await orderModel.find({ userId })
-//         //     .populate({ path: 'products', select: '-description -ingredients' })
-
-//         if (!order) return res.status(404).json({ status: 'failed', message: 'No orders found' })
-
-//         // const categoryOrders = orders.filter(order =>
-//         //     order.products.some(p => p.category === category))
-
-//         res.status(200).json({ status: 'success', order })
-
-//     } catch (error) {
-
-//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
-//         console.log(error)
-//     }
-// }
-
-// const getOrdersByName = async (req, res) => {
-
-//     try {
-
-//         const userId = new Types.ObjectId(req.userId)
-//         const name = req.params.name
-
-//         const orders = await orderModel.aggregate([
-
-//             { $match: { userId } },
-//             {
-//                 $lookup: {
-
-//                     from: 'products',
-//                     localField: 'products',
-//                     as: 'products',
-//                     foreignField: '_id'
-//                 }
-//             },
-//             {
-//                 $match: { 'products.name': name }
-//             },
-//             {
-//                 $project: {
-
-//                     description: 0,
-//                     'products.description': 0,
-//                     'products.ingredients': 0
-//                 }
-//             }
-//         ])
-
-//         if (orders.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
-
-//         res.status(200).json({ status: 'success', orders })
-
-//     } catch (error) {
-
-//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
-//         console.log(error)
-//     }
-// }
-
-// const getOrderByDate = async (req, res) => {
-//     try {
-
-//         const userId = new Types.ObjectId(req.userId)
-//         const userDate = new Date(req.query.date)
-
-//         const month = userDate.getMonth() + 1
-//         const date = userDate.getUTCDate() + '-' + month + '-' + userDate.getFullYear()
-
-//         const orders = await orderModel.find({ userId })
-//             .populate({ path: 'products', select: '-description -ingredients' })
-
-//         if (orders.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
-
-//         const filteredOrder = orders.filter(order => {
-
-//             let orderDate = new Date(order.createdAt)
-
-//             let month = orderDate.getMonth() + 1
-//             orderDate = orderDate.getUTCDate() + '-' + month + '-' + orderDate.getFullYear()
-
-//             if (date === orderDate)
-//                 return order
-//         })
-
-//         if (filteredOrder.length < 1) return res.status(404).json({ status: 'failed', message: 'No orders found' })
+        const savedHistory = await inventoryService.addInventoryHistoryService(newInventoryHistory);
+        savedInventory.products = savedHistory;
+        await savedInventory.save();
 
 
-//         res.json({ status: 'success', message: 'Order found', order: filteredOrder })
 
-//     } catch (error) {
+        const updatedProducts = order.products.filter(
+            (product) => product.productId.toString() !== productId.toString())
 
-//         res.status(500).json({ status: 'failed', message: 'Internal Server Error' })
-//         console.log(error)
-//     }
-// }
+        const removedProduct = order.products.find(
+            (product) => product.productId.toString() === productId.toString());
+
+
+        if (updatedProducts.length === order.products.length) {
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Product not found in this order');
+        }
+
+        updatedProducts.forEach((p) => {
+            totalPrice += p.totalPrice || 0;
+            totalQuantity += p.productQuantity || 0;
+            netTotal = totalPrice
+        });
+
+        // order.products = updatedProducts;
+        // order.totalPrice = totalPrice;
+        // order.totalQuantity = totalQuantity;
+        // order.netTotal = netTotal + order.deliveryCharge
+
+        order.isCancelled = true
+        await order.save();
+
+
+        // send FCM
+        const title = 'Order Cancelled!'
+        const body = `Order has been cancelled by ${userName}.`
+        const admin = await userService.findAdmin({ isAdmin: true })
+
+        await sendFCM(admin.FCMToken, title, body)
+
+        return responseHandler(res, constants.OK, 'success', 'Order cancelled  successfully', { order, cancelledProduct: removedProduct });
+
+    } catch (error) {
+        responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
+        console.log(error)
+    }
+}
 
 export default {
     createOrder,
     getAllOrders,
-    getOrderDetails
+    getOrderDetails,
+    cancelOrder
     // getOrdersByCategory,
     // getOrderById,
     // getOrdersByName,

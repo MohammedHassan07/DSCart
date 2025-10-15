@@ -2,7 +2,7 @@ import { Schema, model } from "mongoose";
 import orderHistoryModel from "./orderHistory.model.js";
 
 
-const orderSchema = new Schema({
+const inventorySchema = new Schema({
 
     userId: {
         type: Schema.Types.ObjectId,
@@ -20,22 +20,28 @@ const orderSchema = new Schema({
 
     totalPrice: Number,
 
-    deliveryCharge: Number,
+    // deliveryCharge: Number,
 
     netTotal: Number,
 
     totalQuantity: Number,
 
-    address: {
+    // address: {
+    //     type: String,
+    //     require: true
+    // },
+
+    inventoryNumber: {
         type: String,
-        require: true
+        default: 'INV1'
     },
 
-    orderNumber: {
+    inventoryType: {
         type: String,
-        default: 'OR1'
+        enum: ['add', 'deduct'],
+        required: true
     }
 
 }, { timestamps: true })
 
-export default model('order', orderSchema)
+export default model('inventory', inventorySchema)
