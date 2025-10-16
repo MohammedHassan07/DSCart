@@ -14,7 +14,7 @@ const orderSchema = new Schema({
         type: String
     },
 
-    products: [{type: Schema.Types.ObjectId, requried: true, ref: 'product'}],
+    orderHistory: [{type: Schema.Types.ObjectId, requried: true, ref: 'orderHistory'}],
 
     totalPrice: Number,
 

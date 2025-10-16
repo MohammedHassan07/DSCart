@@ -10,4 +10,6 @@ route.post('/create', orders.createOrder)
 
 route.post('/get-orders', orders.getAllOrders)
 
+route.post('/update-order', orders.updateOrder)
+
 export default route

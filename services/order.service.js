@@ -81,7 +81,7 @@ async function getOrderDetailsService(filter) {
 }
 
 // get order history service find one
-async function getOrderHistoryService(filter){
+async function getOrderHistoryService(filter) {
   const orderHistory = await orderHistoryModel.findOne(filter)
   return orderHistory
 }
@@ -108,7 +108,19 @@ async function markIsCancelled(filter) {
   return cancelledProduct
 }
 
+// update order
+async function updateOrderService(filter, data) {
 
+  const updated = await orderModel.findOneAndUpdate(filter, data, { new: true })
+  return updated
+}
+
+// update order History
+async function updateOrderHistoryService(filter, data) {
+  const updatedOrderHistory = await orderHistoryModel.findOneAndUpdate(filter, data, { new: true })
+
+  return updatedOrderHistory
+}
 
 export default {
   insertManyOrderHistory,
@@ -119,5 +131,7 @@ export default {
   deleteOrderHistoryDetailsService,
   markIsCancelled,
   getOrderHistoryService,
-  getAllOrderHistoryService
+  getAllOrderHistoryService,
+  updateOrderService,
+  updateOrderHistoryService
 }

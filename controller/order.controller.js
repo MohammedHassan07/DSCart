@@ -6,7 +6,6 @@ import responseHandler from "../utils/responseHandler.js"
 import constants from "../config/constants.js"
 import sendFCM from '../utils/sendFCM.js'
 import userService from "../services/user.service.js"
-import inventoryService from '../services/inventory.service.js'
 
 const createOrder = async (req, res) => {
 
@@ -64,7 +63,7 @@ const createOrder = async (req, res) => {
         }
 
         const savedHistory = await orderService.insertManyOrderHistory(newOrderHistory);
-        savedOrder.products = savedHistory.map(h => h._id);;
+        savedOrder.orderHistory = savedHistory.map(h => h._id);;
         await savedOrder.save();
 
         // send FCM
@@ -137,9 +136,73 @@ const getOrderDetails = async (req, res) => {
 
 }
 
+const updateOrder = async (req, res) => {
+    try {
+
+        const { products, totalPrice, address, netTotal, userName, userEmail, totalQuantity, orderId } = req.body
+
+        const userId = req.userId
+
+        if (!products || products.length < 1 || !totalPrice || !address || !netTotal || !totalQuantity || !userName || !userEmail || !orderId) {
+
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
+        }
+
+        for (const product of products) {
+
+            const orderHistoryFilter = {
+                userId: new Types.ObjectId(userId),
+                orderId: new Types.ObjectId(orderId),
+                productId: new Types.ObjectId(product.productId)
+            }
+            const orderHistory = await orderService.updateOrderHistoryService(orderHistoryFilter, product)
+        }
+
+        const data = {
+
+            totalPrice: totalPrice,
+            address: address,
+            netTotal: netTotal,
+            totalQuantity: totalQuantity,
+        }
+
+        const orderFilter = {
+            userId: new Types.ObjectId(userId),
+            _id: new Types.ObjectId(orderId)
+        }
+        const updatedOrder = await orderService.updateOrderService(orderFilter, data)
+
+        if (!updatedOrder) {
+            return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Order not found')
+        }
+
+        // send FCM
+        const title = 'Order updated'
+        const body = `Order has been updated by ${userName}.`
+
+        const filter = {
+            isAdmin: true
+        }
+        const admin = await userService.findAdmin(filter)
+
+        // await sendFCM(admin.FCMToken, title, body)
+
+        return responseHandler(
+            res,
+            constants.OK,
+            "success",
+            "Order and history updated successfully",
+            updatedOrder
+        );
+    } catch (error) {
+        console.log(error)
+        return responseHandler(res, constants.BAD_REQUEST, 'failed', error.message)
+    }
+}
 
 export default {
     createOrder,
     getAllOrders,
     getOrderDetails,
+    updateOrder
 }

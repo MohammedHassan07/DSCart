@@ -52,11 +52,9 @@ import productRoutes from './routes/product.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import orderRoutes from './routes/order.routes.js'
 import deliverAmountRoute from './routes/deliveryAmount.routes.js'
-import inventoryRoute from './routes/inventory.routes.js'
 
 app.use('/api/user', userRoutes)
 app.use('/api/product', productRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/order', orderRoutes)
 app.use('/api/charge', deliverAmountRoute)
-app.use('/api/inventory', inventoryRoute)
