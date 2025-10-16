@@ -33,7 +33,7 @@ async function getAllOrderService(filter, page, limit) {
         let: { orderId: "$_id" },
         pipeline: [
           { $match: { $expr: { $eq: ["$orderId", "$$orderId"] } } },
-          { $match: { isCancelled: false } },
+          { $match: { isDeleted: false } },
           // group by productId to merge duplicate entries
           {
             $group: {

@@ -12,4 +12,8 @@ route.post('/get-orders', orders.getAllOrders)
 
 route.post('/update-order', orders.updateOrder)
 
+route.delete('/delete-order', orders.deleteOrder)
+
+route.delete('/delete-order-item', orders.deleteOrderItem)
+
 export default route

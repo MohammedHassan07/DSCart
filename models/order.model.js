@@ -33,7 +33,7 @@ const orderSchema = new Schema({
         type: String,
     },
     
-    isCancelled: {
+    isDeleted: {
         type: Boolean,
         default: false
     }

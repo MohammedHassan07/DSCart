@@ -89,7 +89,7 @@ const createOrder = async (req, res) => {
     }
 }
 
-// TODO: add filter for isCanceled
+// pagination
 const getAllOrders = async (req, res) => {
 
     try {
@@ -98,7 +98,7 @@ const getAllOrders = async (req, res) => {
         const userId = new Types.ObjectId(req.userId)
 
         let filter = {
-            isCancelled: false
+            isDeleted: false
         }
         if (!req.role)
             filter.userId = userId
@@ -136,6 +136,7 @@ const getOrderDetails = async (req, res) => {
 
 }
 
+// update order
 const updateOrder = async (req, res) => {
     try {
 
@@ -148,14 +149,18 @@ const updateOrder = async (req, res) => {
             return responseHandler(res, constants.BAD_REQUEST, 'failed', 'All fields are required')
         }
 
+        const history = []
         for (const product of products) {
 
             const orderHistoryFilter = {
                 userId: new Types.ObjectId(userId),
                 orderId: new Types.ObjectId(orderId),
-                productId: new Types.ObjectId(product.productId)
+                productId: new Types.ObjectId(product.productId),
+                isDeleted: false
             }
             const orderHistory = await orderService.updateOrderHistoryService(orderHistoryFilter, product)
+
+            history.push(orderHistory)
         }
 
         const data = {
@@ -168,7 +173,8 @@ const updateOrder = async (req, res) => {
 
         const orderFilter = {
             userId: new Types.ObjectId(userId),
-            _id: new Types.ObjectId(orderId)
+            _id: new Types.ObjectId(orderId),
+            isDeleted: false
         }
         const updatedOrder = await orderService.updateOrderService(orderFilter, data)
 
@@ -187,11 +193,12 @@ const updateOrder = async (req, res) => {
 
         // await sendFCM(admin.FCMToken, title, body)
 
+        updatedOrder.orderHistory = history
         return responseHandler(
             res,
             constants.OK,
             "success",
-            "Order and history updated successfully",
+            "Order updated successfully",
             updatedOrder
         );
     } catch (error) {
@@ -200,9 +207,86 @@ const updateOrder = async (req, res) => {
     }
 }
 
+// delete order
+const deleteOrder = async (req, res) => {
+
+    const userId = req.userId
+
+    const { orderId } = req.body
+
+    if (!orderId) {
+        return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Order is required')
+    }
+
+    const orderFilter = {
+        _id: new Types.ObjectId(orderId),
+        userId: new Types.ObjectId(userId)
+    }
+    const deletedOrder = await orderService.updateOrderService(orderFilter, { isDeleted: true })
+
+    if (!deletedOrder) {
+
+        return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Order not found')
+    }
+
+    const history = []
+    for (const historyOrder of deletedOrder.orderHistory) {
+
+        const orderHistoryFilter = {
+            userId: new Types.ObjectId(userId),
+            orderId: new Types.ObjectId(orderId),
+            _id: new Types.ObjectId(historyOrder)
+        }
+        const orderHistory = await orderService.updateOrderHistoryService(orderHistoryFilter, { isDeleted: true })
+
+        history.push(orderHistory)
+    }
+
+    // send FCM
+    const title = 'Order updated'
+    const body = `Order has been updated by ${userName}.`
+
+    const filter = {
+        isAdmin: true
+    }
+    const admin = await userService.findAdmin(filter)
+
+    // await sendFCM(admin.FCMToken, title, body)
+
+    deletedOrder.orderHistory = history
+    return responseHandler(res, constants.OK, 'success', 'Order deleted', deletedOrder)
+
+}
+
+// delete order item
+const deleteOrderItem = async (req, res) => {
+
+    const userId = req.userId
+
+    const { orderId, productId } = req.body
+
+    if (!orderId || !productId) {
+        return responseHandler(res, constants.BAD_REQUEST, 'failed', 'Order is required')
+    }
+
+    const orderFilter = {
+        _id: new Types.ObjectId(orderId),
+        userId: new Types.ObjectId(userId)
+    }
+
+    const orderHistoryFilter = {
+        userId: new Types.ObjectId(userId),
+        orderId: new Types.ObjectId(orderId),
+        _id: new Types.ObjectId(historyOrder)
+    }
+
+}
+
 export default {
     createOrder,
     getAllOrders,
     getOrderDetails,
-    updateOrder
+    updateOrder,
+    deleteOrder,
+    deleteOrderItem
 }

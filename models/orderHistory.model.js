@@ -41,10 +41,11 @@ const orderHistorySchema = new Schema({
         type: String
     },
 
-    isCancelled: {
+    isDeleted: {
         type: Boolean,
         default: false
     }
+    
 }, { timestamps: true })
 
 export default model('orderHistory', orderHistorySchema)
